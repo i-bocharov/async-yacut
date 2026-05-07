@@ -95,10 +95,7 @@ def upload_files() -> Response | str:
     """Страница загрузки файлов на Яндекс Диск."""
     form: UploadForm = UploadForm()
     if form.validate_on_submit():
-        files: list[FileStorage] = form.files.data
-        if not isinstance(files, list):
-            files = [files]
-
+        files: list[FileStorage] = request.files.getlist('files')
         token: str = current_app.config['DISK_TOKEN']
 
         async def process_uploads() -> list[dict[str, str]]:
