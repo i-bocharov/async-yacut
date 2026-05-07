@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<main>
+  <section class="container my-5 px-4 text-center">
+    <h1 class="display-1 text-danger">404</h1>
+    <h2 class="mb-4">Страница не найдена</h2>
+    <p class="lead">
+      Ссылка, которую вы ищете, не существует или была удалена.
+    </p>
+    <a href="{{ url_for('web.index') }}" class="btn btn-primary">
+      Вернуться на главную
+    </a>
+  </section>
+</main>
+{% endblock content %}
