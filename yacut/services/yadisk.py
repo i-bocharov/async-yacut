@@ -21,5 +21,5 @@ DOWNLOAD_LINK_URL: Final[str] = (
 DISK_INFO_URL: Final[str] = f'{API_HOST}{API_VERSION}/disk/'
 
 # Служебные константы
-APP_FOLDER_PREFIX: Final[str] = 'app:/yacut/'
+APP_FOLDER_PREFIX: Final[str] = 'app:/'
 LOCATION_DISK_PREFIX: Final[str] = '/disk'
