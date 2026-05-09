@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Final
 from flask import Blueprint, Response, jsonify, request
 from sqlalchemy import select

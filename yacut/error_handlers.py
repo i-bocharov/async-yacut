@@ -1,3 +1,4 @@
+from __future__ import annotations
 from flask import Flask, Response, jsonify, render_template, request
 from .extensions import db
 
