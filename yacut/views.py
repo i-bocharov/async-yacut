@@ -35,6 +35,10 @@ async def _upload_file_to_disk(
             REQUEST_UPLOAD_URL, headers=headers, params={'path': path}
         ) as resp:
             upload_data: dict = await resp.json()
+            if 'href' not in upload_data:
+                raise ValueError(
+                    f'Yandex Disk API error: {upload_data}'
+                )
             upload_href: str = upload_data['href']
 
         # Загрузка файла (без Authorization, как требует API)
@@ -44,8 +48,8 @@ async def _upload_file_to_disk(
             # Обработка Location: декодируем и убираем /disk
             location: str = resp.headers.get('Location', '')
             file_path: str = unquote(location).replace(
-                LOCATION_DISK_PREFIX, '', 1
-            )
+                LOCATION_DISK_PREFIX, ''
+            ).replace('app:', '', 1).lstrip('/')
 
         # Получение ссылки на скачивание
         async with session.get(
@@ -53,6 +57,10 @@ async def _upload_file_to_disk(
             params={'path': file_path}
         ) as resp:
             download_data: dict = await resp.json()
+            if 'href' not in download_data:
+                raise ValueError(
+                    f'Yandex Disk API error: {download_data}'
+                )
             return download_data['href']
 
 
