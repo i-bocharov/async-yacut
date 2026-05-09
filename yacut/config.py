@@ -11,10 +11,6 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
     WTF_CSRF_ENABLED: bool = True
     DISK_TOKEN: str = os.getenv('DISK_TOKEN', '')
-    YADISK_API_BASE_URL: str = os.getenv(
-        'YADISK_API_BASE_URL',
-        'https://cloud-api.yandex.net/v1/disk/resources'
-    )
     MAX_CONTENT_LENGTH: int = 16 * 1024 * 1024  # 16 MB limit
 
 

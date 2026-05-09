@@ -11,6 +11,12 @@ from yacut.extensions import db
 from yacut.forms import ShortenForm, UploadForm
 from yacut.models import URLMap
 from yacut.services.shortener import get_unique_short_id
+from yacut.services.yadisk import (
+    REQUEST_UPLOAD_URL,
+    DOWNLOAD_LINK_URL,
+    APP_FOLDER_PREFIX,
+    LOCATION_DISK_PREFIX,
+)
 
 web_bp: Final[Blueprint] = Blueprint('web', __name__)
 
@@ -19,15 +25,14 @@ async def _upload_file_to_disk(
     file: FileStorage, token: str
 ) -> str:
     """Загружает файл на Яндекс Диск и возвращает прямую ссылку."""
-    base_url: str = current_app.config['YADISK_API_BASE_URL']
     headers: dict[str, str] = {'Authorization': f'OAuth {token}'}
     filename: str = file.filename or ''
-    path: str = f'app:/yacut/{quote(filename)}'
+    path: str = f'{APP_FOLDER_PREFIX}{quote(filename)}'
 
     async with aiohttp.ClientSession() as session:
         # Получение ссылки для загрузки
         async with session.get(
-            f'{base_url}/upload', headers=headers, params={'path': path}
+            REQUEST_UPLOAD_URL, headers=headers, params={'path': path}
         ) as resp:
             upload_data: dict = await resp.json()
             upload_href: str = upload_data['href']
@@ -38,11 +43,13 @@ async def _upload_file_to_disk(
             resp.raise_for_status()
             # Обработка Location: декодируем и убираем /disk
             location: str = resp.headers.get('Location', '')
-            file_path: str = unquote(location).replace('/disk', '', 1)
+            file_path: str = unquote(location).replace(
+                LOCATION_DISK_PREFIX, '', 1
+            )
 
         # Получение ссылки на скачивание
         async with session.get(
-            f'{base_url}/download', headers=headers,
+            DOWNLOAD_LINK_URL, headers=headers,
             params={'path': file_path}
         ) as resp:
             download_data: dict = await resp.json()
