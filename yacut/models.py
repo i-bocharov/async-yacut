@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from __future__ import annotations
 from datetime import datetime
 from .extensions import db
 
@@ -14,7 +14,7 @@ class URLMap(db.Model):  # type: ignore[name-defined]
     )
     timestamp: datetime = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def to_dict(self) -> Dict[str, Union[int | str | datetime]]:
+    def to_dict(self) -> dict[str, int | str | datetime]:
         """Сериализует объект модели в словарь для API-ответов."""
         return {
             'id': self.id,
