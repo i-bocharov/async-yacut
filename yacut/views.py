@@ -1,3 +1,4 @@
+from __future__ import annotations
 import asyncio
 from typing import Final, cast
 from flask import Blueprint, Response, current_app, render_template, request
