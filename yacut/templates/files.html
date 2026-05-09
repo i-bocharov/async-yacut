@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<main>
+  <section class="container my-5 px-4">
+    <h1 class="text-center"><span style="color:red">Ya</span>Cut</h1>
+    <p class="text-center my-4">
+      Загрузите файлы и получите на них короткие ссылки
+    </p>
+
+    {% set file_cls = "form-control form-control-lg py-2 mb-3" %}
+
+    <div class="container">
+      <div class="row my-3">
+        <div class="col-sm"></div>
+        <div class="col-sm">
+          <form method="POST" action="{{ url_for('web.upload_files') }}" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div>
+              {{ form.files(class=file_cls) }}
+              {% if form.files.errors %}
+              <p><span style="color:red">{{ form.files.errors[0] }}</span></p>
+              {% endif %}
+
+              <input type="submit" class="btn btn-primary" value="Загрузить">
+            </div>
+          </form>
+        </div>
+        <div class="col-sm"></div>
+      </div>
+    </div>
+
+    {% if uploaded_links %}
+    <div class="container mt-4">
+      <div class="row">
+        <div class="col-sm"></div>
+        <div class="col-sm">
+          <h5 class="text-center">Загруженные файлы:</h5>
+          <ul class="list-group">
+            {% for item in uploaded_links %}
+            <li class="list-group-item">
+              <strong>{{ item.filename }}:</strong>
+              <a href="{{ item.short_url }}">{{ item.short_url }}</a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="col-sm"></div>
+      </div>
+    </div>
+    {% endif %}
+
+  </section>
+</main>
+{% endblock content %}
