@@ -38,14 +38,7 @@ python3 -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Создать в директории проекта файл .env с четыремя переменными окружения:
-
-```
-FLASK_APP=yacut
-FLASK_ENV=development
-SECRET_KEY=your_secret_key
-DB=sqlite:///db.sqlite3
-```
+Создать в директории проекта файл .env с переменными окружения в соответствии с .env.example
 
 Создать базу данных и применить миграции:
 

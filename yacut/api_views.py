@@ -1,7 +1,9 @@
 from __future__ import annotations
+from http import HTTPStatus
 from typing import Final
 from flask import Blueprint, Response, jsonify, request
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from yacut.extensions import db
 from yacut.models import URLMap
@@ -15,13 +17,17 @@ def create_short_link() -> tuple[Response, int]:
     """Создаёт короткую ссылку через REST API."""
     # Проверка наличия JSON-тела
     if not request.is_json or request.get_json(silent=True) is None:
-        return jsonify(message='Отсутствует тело запроса'), 400
+        return jsonify(
+            message='Отсутствует тело запроса'
+        ), HTTPStatus.BAD_REQUEST.value
 
     data: dict[str, str] = request.get_json()
 
     # Валидация обязательного поля
     if 'url' not in data or not data['url']:
-        return jsonify(message='"url" является обязательным полем!'), 400
+        return jsonify(
+            message='"url" является обязательным полем!'
+        ), HTTPStatus.BAD_REQUEST.value
 
     original_url: str = data['url']
     custom_id: str | None = data.get('custom_id')
@@ -34,28 +40,31 @@ def create_short_link() -> tuple[Response, int]:
     try:
         short_id: str = get_unique_short_id(custom_id)
     except ValueError as exc:
-        return jsonify(message=str(exc)), 400
+        return jsonify(message=str(exc)), HTTPStatus.BAD_REQUEST.value
     except RuntimeError:
         return jsonify(
             message='Не удалось сгенерировать уникальный идентификатор'
-        ), 500
+        ), HTTPStatus.INTERNAL_SERVER_ERROR.value
 
     # Сохранение в БД
     new_link: URLMap = URLMap(original=original_url, short=short_id)
     db.session.add(new_link)
     try:
         db.session.commit()
-    except Exception:
+    except IntegrityError:
         db.session.rollback()
         return jsonify(
             message='Предложенный вариант короткой ссылки уже существует.'
-        ), 400
+        ), HTTPStatus.BAD_REQUEST.value
 
     # Формирование ответа
     base_url: str = request.host_url.rstrip('/')
     short_url: str = f'{base_url}/{new_link.short}'
 
-    return jsonify(url=original_url, short_link=short_url), 201
+    return jsonify(
+        url=original_url,
+        short_link=short_url
+    ), HTTPStatus.CREATED.value
 
 
 @api_bp.route('/id/<short_id>/', methods=['GET'])
@@ -65,6 +74,8 @@ def get_original_link(short_id: str) -> tuple[Response, int]:
         select(URLMap).filter_by(short=short_id)
     )
     if not url_map:
-        return jsonify(message='Указанный id не найден'), 404
+        return jsonify(
+            message='Указанный id не найден'
+        ), HTTPStatus.NOT_FOUND.value
 
-    return jsonify(url=url_map.original), 200
+    return jsonify(url=url_map.original), HTTPStatus.OK.value
