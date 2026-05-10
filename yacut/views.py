@@ -114,29 +114,37 @@ def upload_files() -> Response | str:
         files: list[FileStorage] = request.files.getlist('files')
         token: str = current_app.config['DISK_TOKEN']
 
-        async def process_uploads() -> list[dict[str, str]]:
-            results: list[dict[str, str]] = []
-            for f in files:
-                direct_link: str = await _upload_file_to_disk(f, token)
-                short_id: str = get_unique_short_id()
-                new_link: URLMap = URLMap(
-                    original=direct_link, short=short_id
-                )
-                db.session.add(new_link)
-                fname: str = f.filename or ''
-                host: str = request.host_url.rstrip('/')
-                results.append({
-                    'filename': fname,
-                    'short_url': f'{host}/{new_link.short}',
-                })
-            db.session.commit()
-            return results
+        async def process_uploads() -> list[tuple[str, str, str]]:
+            # Параллельная загрузка всех файлов на Яндекс Диск
+            upload_coroutines = [
+                _upload_file_to_disk(f, token) for f in files
+            ]
+            direct_links: list[str] = await asyncio.gather(*upload_coroutines)
 
-        uploaded_links: list[dict[str, str]] = asyncio.run(
+            # Генерация идентификаторов и сбор данных
+            return [
+                (f.filename or '', link, get_unique_short_id())
+                for f, link in zip(files, direct_links)
+            ]
+
+        uploaded_links: list[tuple[str, str, str]] = asyncio.run(
             process_uploads()
         )
+
+        # Запись в БД одной транзакцией после успешной загрузки всех файлов
+        results: list[dict[str, str]] = []
+        host: str = request.host_url.rstrip('/')
+        for fname, direct_link, short_id in uploaded_links:
+            new_link: URLMap = URLMap(original=direct_link, short=short_id)
+            db.session.add(new_link)
+            results.append({
+                'filename': fname,
+                'short_url': f'{host}/{short_id}',
+            })
+        db.session.commit()
+
         return render_template(
-            'files.html', form=form, uploaded_links=uploaded_links
+            'files.html', form=form, uploaded_links=results
         )
 
     return render_template('files.html', form=form)
